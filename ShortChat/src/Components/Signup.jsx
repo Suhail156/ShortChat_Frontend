@@ -2,6 +2,7 @@ import { useState } from "react";
 import api from "../api";
 import { useNavigate } from "react-router-dom";
 import md5 from "md5";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function Signup() {
   const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
@@ -11,21 +12,28 @@ export default function Signup() {
     e.preventDefault();
     try {
       if (form.password.length < 8) {
-        alert("Password must be at least 8 characters");
+        toast.error("Password must be at least 8 characters");
         return;
       }
-      const res = await api.post("/user/signup", { ...form, password: md5(form.password) });
+
+      const res = await api.post("/user/signup", {
+        ...form,
+        password: md5(form.password),
+      });
+
       if (res.status === 201) {
-        alert("Registration successful");
+        toast.success("Registration successful");
         navigate("/");
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
+      toast.error(error.response?.data?.message || "Registration failed");
     }
   };
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
+      <Toaster position="top-right" />
       <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-sm">
         <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">Register</h2>
         <form onSubmit={handleSubmit} className="space-y-4">

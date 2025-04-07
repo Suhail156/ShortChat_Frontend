@@ -1,39 +1,43 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../api';
+import toast, { Toaster } from 'react-hot-toast';
+import api from '../api'; // your Axios setup
 import md5 from 'md5';
 
 const Login = () => {
-  const [form, setForm] = useState({ emailOrPhone: "", password: "" });
+  const [form, setForm] = useState({ emailOrPhone: '', password: '' });
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       if (form.password.length < 8) {
-        alert("Password must be at least 8 characters");
+        toast.error('Password must be at least 8 characters');
         return;
       }
 
-      const res = await api.post("/user/login", {
+      const res = await api.post('/user/login', {
         ...form,
         password: md5(form.password),
       });
 
       if (res.status === 200 && res.data?.data) {
-        // Save the full user object for future use (e.g., chat)
-        localStorage.setItem("user", JSON.stringify(res.data.data));
-        alert("Login successful");
-        navigate("/home");
+        // Save token and user data
+        localStorage.setItem('token', res.data.token);
+        localStorage.setItem('user', JSON.stringify(res.data.data));
+
+        toast.success('Login successful');
+        navigate('/home');
       }
     } catch (error) {
-      console.error("Login error:", error);
-      alert(error.response?.data?.message || "Login failed. Please try again.");
+      console.error('Login error:', error);
+      toast.error(error.response?.data?.message || 'Login failed. Please try again.');
     }
   };
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
+      <Toaster position="top-right" reverseOrder={false} />
       <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-sm">
         <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">Login</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
