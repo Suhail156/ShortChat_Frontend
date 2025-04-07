@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 import api from '../api'; // your Axios setup
-import md5 from 'md5';
 
 const Login = () => {
   const [form, setForm] = useState({ emailOrPhone: '', password: '' });
@@ -16,14 +15,10 @@ const Login = () => {
         return;
       }
 
-      const res = await api.post('/user/login', {
-        ...form,
-        password: md5(form.password),
-      });
+      const res = await api.post('/user/login', form); // send plain password
 
       if (res.status === 200 && res.data?.data) {
-        // Save token and user data
-        localStorage.setItem('token', res.data.token);
+        localStorage.setItem('token', res.data.data.token);
         localStorage.setItem('user', JSON.stringify(res.data.data));
 
         toast.success('Login successful');

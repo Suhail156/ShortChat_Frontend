@@ -1,7 +1,6 @@
 import { useState } from "react";
 import api from "../api";
 import { useNavigate } from "react-router-dom";
-import md5 from "md5";
 import toast, { Toaster } from "react-hot-toast";
 
 export default function Signup() {
@@ -18,7 +17,7 @@ export default function Signup() {
 
       const res = await api.post("/user/signup", {
         ...form,
-        password: md5(form.password),
+        // password sent as plain text (will be hashed with bcrypt on backend)
       });
 
       if (res.status === 201) {
