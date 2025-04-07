@@ -15,24 +15,21 @@ const Login = () => {
         return;
       }
 
-      const res = await api.post('/user/login', form); // send plain password
-
+      const res = await api.post('/user/login', form);
       if (res.status === 200 && res.data?.data) {
         localStorage.setItem('token', res.data.data.token);
-        localStorage.setItem('user', JSON.stringify(res.data.data));
-
+        localStorage.setItem('user', JSON.stringify(res.data.data.user));
         toast.success('Login successful');
         navigate('/home');
       }
     } catch (error) {
-      console.error('Login error:', error);
       toast.error(error.response?.data?.message || 'Login failed. Please try again.');
     }
   };
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      <Toaster position="top-right" reverseOrder={false} />
+      <Toaster position="top-right" />
       <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-sm">
         <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">Login</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -41,7 +38,7 @@ const Login = () => {
             placeholder="Email or Phone"
             value={form.emailOrPhone}
             onChange={(e) => setForm({ ...form, emailOrPhone: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-green-500"
             required
           />
           <input
@@ -49,21 +46,15 @@ const Login = () => {
             placeholder="Password"
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-green-500"
             required
           />
-          <button
-            type="submit"
-            className="w-full bg-green-600 text-white font-semibold py-2 rounded-md hover:bg-green-700 transition duration-300"
-          >
+          <button type="submit" className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">
             Login
           </button>
         </form>
         <div className="flex justify-center mt-6">
-          <button
-            className="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-6 rounded-md transition duration-300"
-            onClick={() => navigate('/signup')}
-          >
+          <button onClick={() => navigate('/signup')} className="bg-gray-500 text-white py-2 px-6 rounded">
             Signup?
           </button>
         </div>

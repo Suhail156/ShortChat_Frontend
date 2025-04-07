@@ -2,7 +2,11 @@ import React, { useState, useEffect } from "react";
 import { io } from "socket.io-client";
 import api from "../api";
 
-const socket = io("https://shortchat-backend.onrender.com");
+const socket = io("https://shortchat-backend.onrender.com", {
+  auth: {
+    token: localStorage.getItem("token"),
+  },
+});
 
 const Home = () => {
   const [users, setUsers] = useState([]);
@@ -10,7 +14,7 @@ const Home = () => {
   const [message, setMessage] = useState("");
   const [chat, setChat] = useState([]);
 
-  const user = JSON.parse(localStorage.getItem("user")); // Must include _id
+  const user = JSON.parse(localStorage.getItem("user"));
   const userId = user?._id;
 
   useEffect(() => {
@@ -18,9 +22,7 @@ const Home = () => {
   }, []);
 
   useEffect(() => {
-    if (selectedUser) {
-      fetchMessages();
-    }
+    if (selectedUser) fetchMessages();
   }, [selectedUser]);
 
   useEffect(() => {
@@ -33,9 +35,7 @@ const Home = () => {
       }
     });
 
-    return () => {
-      socket.off("receive_message");
-    };
+    return () => socket.off("receive_message");
   }, [selectedUser]);
 
   const fetchUsers = async () => {
@@ -49,35 +49,23 @@ const Home = () => {
   };
 
   const sendMessage = async () => {
-    if (message.trim() === "" || !selectedUser) return;
+    if (!message.trim()) return;
 
-    const newMessage = {
-      sender: userId,
-      receiver: selectedUser._id,
-      content: message,
-    };
-
-    try {
-      socket.emit("send_message", newMessage);
-      await api.post("/messages", newMessage);
-      setMessage("");
-    } catch (err) {
-      console.error("Message send failed:", err);
-    }
+    const msg = { sender: userId, receiver: selectedUser._id, content: message };
+    socket.emit("send_message", msg);
+    await api.post("/messages", msg);
+    setMessage("");
   };
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 flex flex-col md:flex-row gap-6">
-      {/* User List */}
       <div className="w-full md:w-1/3 bg-white p-4 shadow rounded">
         <h2 className="text-xl font-semibold mb-3">Users</h2>
         <ul className="space-y-2">
           {users.map((u) => (
             <li
               key={u._id}
-              className={`p-2 rounded cursor-pointer hover:bg-gray-200 ${
-                selectedUser?._id === u._id ? "bg-blue-100 font-semibold" : ""
-              }`}
+              className={`p-2 rounded cursor-pointer hover:bg-gray-200 ${selectedUser?._id === u._id ? "bg-blue-100 font-semibold" : ""}`}
               onClick={() => setSelectedUser(u)}
             >
               {u.name}
@@ -86,7 +74,6 @@ const Home = () => {
         </ul>
       </div>
 
-      {/* Chat Box */}
       <div className="w-full md:w-2/3 bg-white p-4 shadow rounded flex flex-col">
         <h2 className="text-xl font-semibold mb-3">
           Chat with: {selectedUser?.name || "Select a user"}
@@ -97,9 +84,7 @@ const Home = () => {
             <div
               key={idx}
               className={`max-w-[70%] px-4 py-2 rounded text-sm ${
-                msg.sender === userId
-                  ? "ml-auto bg-blue-200 text-right"
-                  : "mr-auto bg-green-200 text-left"
+                msg.sender === userId ? "ml-auto bg-blue-200 text-right" : "mr-auto bg-green-200 text-left"
               }`}
             >
               <p>{msg.content}</p>
@@ -113,12 +98,9 @@ const Home = () => {
             placeholder="Type a message..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            className="flex-1 px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="flex-1 px-4 py-2 border rounded focus:ring-2 focus:ring-blue-400"
           />
-          <button
-            onClick={sendMessage}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
-          >
+          <button onClick={sendMessage} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
             Send
           </button>
         </div>
