@@ -1,31 +1,39 @@
 import React, { useState, useEffect } from "react";
 import { io } from "socket.io-client";
+import { useNavigate } from "react-router-dom";
 import api from "../api";
 
-const socket = io("https://shortchat-backend.onrender.com", {
-  auth: {
-    token: localStorage.getItem("token"),
-  },
-});
+let socket;
 
 const Home = () => {
+  const navigate = useNavigate();
+
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [message, setMessage] = useState("");
   const [chat, setChat] = useState([]);
-
-  const user = JSON.parse(localStorage.getItem("user"));
+  const [user, setUser] = useState(null);
   const userId = user?._id;
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    const token = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("user");
 
-  useEffect(() => {
-    if (selectedUser) fetchMessages();
-  }, [selectedUser]);
+    if (!token || !storedUser) {
+      navigate("/login");
+      return;
+    }
 
-  useEffect(() => {
+    const parsedUser = JSON.parse(storedUser);
+    setUser(parsedUser);
+
+    // Initialize socket only once
+    socket = io("https://shortchat-backend.onrender.com", {
+      auth: {
+        token,
+      },
+    });
+
     socket.on("receive_message", (data) => {
       if (
         (data.sender === selectedUser?._id && data.receiver === userId) ||
@@ -35,23 +43,44 @@ const Home = () => {
       }
     });
 
-    return () => socket.off("receive_message");
+    fetchUsers();
+
+    return () => {
+      if (socket) socket.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (selectedUser) fetchMessages();
   }, [selectedUser]);
 
   const fetchUsers = async () => {
-    const res = await api.get("/user/all");
-    setUsers(res.data.filter((u) => u._id !== userId));
+    try {
+      const res = await api.get("/user/all");
+      setUsers(res.data.filter((u) => u._id !== userId));
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    }
   };
 
   const fetchMessages = async () => {
-    const res = await api.get(`/messages/${userId}/${selectedUser._id}`);
-    setChat(res.data);
+    try {
+      const res = await api.get(`/messages/${userId}/${selectedUser._id}`);
+      setChat(res.data);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+    }
   };
 
   const sendMessage = async () => {
     if (!message.trim()) return;
 
-    const msg = { sender: userId, receiver: selectedUser._id, content: message };
+    const msg = {
+      sender: userId,
+      receiver: selectedUser._id,
+      content: message,
+    };
+
     socket.emit("send_message", msg);
     await api.post("/messages", msg);
     setMessage("");
@@ -65,7 +94,9 @@ const Home = () => {
           {users.map((u) => (
             <li
               key={u._id}
-              className={`p-2 rounded cursor-pointer hover:bg-gray-200 ${selectedUser?._id === u._id ? "bg-blue-100 font-semibold" : ""}`}
+              className={`p-2 rounded cursor-pointer hover:bg-gray-200 ${
+                selectedUser?._id === u._id ? "bg-blue-100 font-semibold" : ""
+              }`}
               onClick={() => setSelectedUser(u)}
             >
               {u.name}
@@ -84,7 +115,9 @@ const Home = () => {
             <div
               key={idx}
               className={`max-w-[70%] px-4 py-2 rounded text-sm ${
-                msg.sender === userId ? "ml-auto bg-blue-200 text-right" : "mr-auto bg-green-200 text-left"
+                msg.sender === userId
+                  ? "ml-auto bg-blue-200 text-right"
+                  : "mr-auto bg-green-200 text-left"
               }`}
             >
               <p>{msg.content}</p>
@@ -100,7 +133,10 @@ const Home = () => {
             onChange={(e) => setMessage(e.target.value)}
             className="flex-1 px-4 py-2 border rounded focus:ring-2 focus:ring-blue-400"
           />
-          <button onClick={sendMessage} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+          <button
+            onClick={sendMessage}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
             Send
           </button>
         </div>
