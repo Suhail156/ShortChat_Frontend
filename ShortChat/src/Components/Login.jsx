@@ -24,7 +24,7 @@ const Login = () => {
         // Save the full user object for future use (e.g., chat)
         localStorage.setItem("user", JSON.stringify(res.data.data));
         alert("Login successful");
-        navigate("/");
+        navigate("/home");
       }
     } catch (error) {
       console.error("Login error:", error);
