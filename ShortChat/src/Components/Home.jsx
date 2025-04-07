@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { io } from "socket.io-client";
 import api from "../api";
 
-const socket = io("http://localhost:3521");
+const socket = io("https://shortchat-backend.onrender.com");
 
 const Home = () => {
   const [users, setUsers] = useState([]);
