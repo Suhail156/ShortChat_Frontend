@@ -72,7 +72,7 @@ const Home = () => {
       const res = await api.get("/user/all");
       const filtered = res.data.filter((u) => u._id !== loggedInUserId);
       setUsers(filtered);
-  
+
       if (!filtered.find((u) => u._id === selectedUser?._id)) {
         setSelectedUser(null);
       }
@@ -80,7 +80,6 @@ const Home = () => {
       console.error("Error fetching users:", error.response?.data || error.message);
     }
   };
-  
 
   const fetchMessages = async () => {
     if (!user?._id || !selectedUser?._id) return;
@@ -106,17 +105,25 @@ const Home = () => {
 
     try {
       socketRef.current?.emit("send_message", msg);
-      await api.post("/messages", msg);
-      setChat((prev) => [...prev, msg]);
+      const res = await api.post("/messages", msg);
+      setChat((prev) => [...prev, res.data]);
       setMessage("");
     } catch (error) {
       console.error("Failed to send message:", error.response?.data || error.message);
     }
   };
 
+  const deleteMessage = async (id) => {
+    try {
+      await api.delete(`/messages/${id}`);
+      setChat((prev) => prev.filter((msg) => msg._id !== id));
+    } catch (error) {
+      console.error("Failed to delete message:", error.response?.data || error.message);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-tr from-pink-100 to-purple-100 p-4 flex flex-col md:flex-row gap-4 font-sans">
-      
       {/* Users Sidebar */}
       <div className="w-full md:w-1/3 bg-white rounded-2xl shadow-lg p-4 overflow-y-auto max-h-[90vh]">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">💬 Chats</h2>
@@ -159,7 +166,11 @@ const Home = () => {
           {chat.map((msg, idx) => (
             <div
               key={idx}
-              className={`flex flex-col max-w-[70%] rounded-2xl px-4 py-2 text-sm shadow-md ${
+              title="Click to delete"
+              onClick={() =>
+                window.confirm("Delete this message?") && deleteMessage(msg._id)
+              }
+              className={`flex flex-col max-w-[70%] rounded-2xl px-4 py-2 text-sm shadow-md cursor-pointer transition-opacity hover:opacity-80 ${
                 msg.sender === user?._id
                   ? "bg-blue-500 text-white self-end ml-auto"
                   : "bg-gray-200 text-gray-900 self-start"
