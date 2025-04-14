@@ -37,29 +37,30 @@ const Home = () => {
       socketRef.current.on("receive_message", (data) => {
         const senderName = users.find((u) => u._id === data.sender)?.name || "Someone";
       
-        // ✅ Show styled toast if not currently chatting with this user
-        if (
-          selectedUser?._id !== data.sender &&
-          data.receiver === normalizedUser._id
-        ) {
-          toast(`📩 Message from ${senderName}`, {
-            style: {
-              background: "#4f46e5",
-              color: "#fff",
-              fontWeight: "bold",
-            },
-            icon: "💬",
-          });
-        }
-      
-        // ✅ Always add message to chat if relevant
+        // Add message to chat if it's part of current conversation
         if (
           (data.sender === selectedUser?._id && data.receiver === normalizedUser._id) ||
           (data.sender === normalizedUser._id && data.receiver === selectedUser?._id)
         ) {
           setChat((prev) => [...prev, data]);
         }
+      
+        // Show toast if user is not currently chatting with sender
+        if (
+          data.receiver === normalizedUser._id &&
+          (!selectedUser || selectedUser._id !== data.sender)
+        ) {
+          toast.success(`💬 New message from ${senderName}`, {
+            style: {
+              background: "#6366f1",
+              color: "#fff",
+              fontWeight: "500",
+              borderRadius: "12px",
+            },
+          });
+        }
       });
+      
       
 
       fetchUsers(normalizedUser._id);
