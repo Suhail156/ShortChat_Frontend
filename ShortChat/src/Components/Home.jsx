@@ -35,6 +35,15 @@ const Home = () => {
       });
 
       socketRef.current.on("receive_message", (data) => {
+        // Show notification if the message is from someone else (not the current selected user)
+        if (
+          selectedUser?._id !== data.sender &&
+          data.receiver === normalizedUser._id
+        ) {
+          toast(`📩 New message from ${data.senderName || "a user"}`);
+        }
+      
+        // Update chat if it's with the selected user
         if (
           (data.sender === selectedUser?._id && data.receiver === normalizedUser._id) ||
           (data.sender === normalizedUser._id && data.receiver === selectedUser?._id)
